@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master de Desigualdades</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f3f4f6;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text);
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 550px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Configuración Header */
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+        }
+
+        .sound-btn {
+            background: none;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            font-size: 1.2rem;
+            border-radius: 4px;
+            padding: 2px 8px;
+        }
+
+        /* Marcador */
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #4b5563;
+        }
+
+        /* Barra de Tiempo */
+        .timer-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 100%;
+            transition: width 0.1s linear, background-color 0.3s;
+        }
+
+        .timer-danger { background-color: var(--error); }
+
+        /* Caja del Problema */
+        .problem-box {
+            background-color: #eef2ff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            font-family: 'Courier New', monospace;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        /* Inputs */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        input {
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 140px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        button.action-btn {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        button.action-btn:hover { background-color: var(--primary-dark); }
+        button.action-btn:active { transform: scale(0.98); }
+
+        /* Feedback y Pistas */
+        #feedback {
+            margin-top: 0.5rem;
+            font-weight: bold;
+            min-height: 1.5rem;
+            font-size: 1.1rem;
+        }
+        .feedback-correct { color: var(--success); }
+        .feedback-wrong { color: var(--error); }
+
+        .hint {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #6b7280;
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px dashed #d1d5db;
+            line-height: 1.4;
+        }
+
+        /* Animaciones */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-controls">
+        <div>
+            <label for="difficulty">Nivel:</label>
+            <select id="difficulty" onchange="changeDifficulty()">
+                <option value="1">1. Fácil (±20)</option>
+                <option value="2" selected>2. Medio (±100)</option>
+                <option value="3">3. Difícil (±1000)</option>
+            </select>
+        </div>
+        <button class="sound-btn" id="soundToggle" onclick="toggleSound()" title="Activar/Desactivar sonido">🔊</button>
+    </div>
+
+    <div class="score-board">
+        <span>Aciertos: <span id="score" style="color:var(--success)">0</span></span>
+        <span>Racha: <span id="streak" style="color:var(--primary)">0</span></span>
+    </div>
+
+    <div class="timer-container">
+        <div class="timer-bar" id="timerBar"></div>
+    </div>
+
+    <div class="problem-box" id="problemDisplay">
+        Iniciando...
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="userAnswer" placeholder="-4:-3" autocomplete="off">
+        <button class="action-btn" onclick="checkAnswer()">Responder</button>
+    </div>
+
+    <div id="feedback"></div>
+
+    <div class="hint">
+        <strong>Formato: a:b</strong> (Ejemplo: Si la solución son -4 y -3, escribe <strong>-4:-3</strong>).<br>
+        ¡Cuidado! En niveles altos el tiempo corre más rápido y las desigualdades pueden invertirse.
+    </div>
+</div>
+
+<script>
+    // --- Configuración del Juego ---
+    const config = {
+        1: { range: 20, time: 30, allowInverted: false }, // Fácil
+        2: { range: 100, time: 20, allowInverted: true }, // Medio
+        3: { range: 1000, time: 10, allowInverted: true } // Difícil
+    };
+
+    let state = {
+        currentSolution: { min: 0, max: 0 },
+        score: 0,
+        streak: 0,
+        level: 2,
+        soundEnabled: true,
+        timerInterval: null,
+        timeLeft: 0,
+        maxTime: 0,
+        isGameOver: false
+    };
+
+    // --- Audio Context (Sonidos generados) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playTone(freq, type, duration) {
+        if (!state.soundEnabled) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playSound(result) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (result === 'correct') {
+            // Sonido agudo ascendente
+            playTone(600, 'sine', 0.1);
+            setTimeout(() => playTone(800, 'sine', 0.2), 100);
+        } else if (result === 'wrong') {
+            // Sonido grave descendente
+            playTone(200, 'sawtooth', 0.3);
+            setTimeout(() => playTone(150, 'sawtooth', 0.3), 150);
+        }
+    }
+
+    function toggleSound() {
+        state.soundEnabled = !state.soundEnabled;
+        document.getElementById('soundToggle').innerText = state.soundEnabled ? '🔊' : '🔇';
+    }
+
+    // --- Lógica del Juego ---
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function changeDifficulty() {
+        state.level = parseInt(document.getElementById('difficulty').value);
+        state.score = 0;
+        state.streak = 0;
+        updateScoreBoard();
+        generateProblem();
+    }
+
+    function startTimer() {
+        clearInterval(state.timerInterval);
+        const levelConfig = config[state.level];
+        state.maxTime = levelConfig.time;
+        state.timeLeft = state.maxTime;
+        
+        const bar = document.getElementById('timerBar');
+        bar.style.width = '100%';
+        bar.className = 'timer-bar'; // Reset colors
+
+        state.timerInterval = setInterval(() => {
+            state.timeLeft -= 0.1;
+            const percentage = (state.timeLeft / state.maxTime) * 100;
+            bar.style.width = `${percentage}%`;
+
+            if (state.timeLeft <= 5) {
+                bar.classList.add('timer-danger');
+            }
+
+            if (state.timeLeft <= 0) {
+                clearInterval(state.timerInterval);
+                handleTimeOut();
+            }
+        }, 100);
+    }
+
+    function handleTimeOut() {
+        playSound('wrong');
+        const feedbackEl = document.getElementById('feedback');
+        feedbackEl.className = 'feedback-wrong';
+        feedbackEl.innerHTML = `¡Tiempo agotado! Era <strong>${state.currentSolution.min}:${state.currentSolution.max}</strong>`;
+        state.streak = 0;
+        updateScoreBoard();
+        document.getElementById('userAnswer').disabled = true;
+        setTimeout(generateProblem, 2000);
+    }
+
+    function generateProblem() {
+        const levelConfig = config[state.level];
+        document.getElementById('userAnswer').value = '';
+        document.getElementById('userAnswer').disabled = false;
+        document.getElementById('userAnswer').focus();
+        document.getElementById('feedback').innerHTML = '&nbsp;';
+        document.querySelector('.problem-box').classList.remove('shake');
+
+        // Generar números según rango del nivel
+        let n1 = getRandomInt(-levelConfig.range, levelConfig.range);
+        let n2 = getRandomInt(-levelConfig.range, levelConfig.range);
+        
+        while (Math.abs(n1 - n2) < 2) {
+            n2 = getRandomInt(-levelConfig.range, levelConfig.range);
+        }
+
+        let valA = Math.min(n1, n2);
+        let valB = Math.max(n1, n2);
+
+        // Operadores
+        let opTypeLeft = Math.random() < 0.5 ? '<' : '≤';
+        let opTypeRight = Math.random() < 0.5 ? '<' : '≤';
+
+        // Calcular solución
+        let solutionMin = (opTypeLeft === '≤') ? valA : valA + 1;
+        let solutionMax = (opTypeRight === '≤') ? valB : valB - 1;
+        state.currentSolution = { min: solutionMin, max: solutionMax };
+
+        // Orientación (Normal o Invertida)
+        // Solo invertimos si el nivel lo permite
+        let isInverted = levelConfig.allowInverted && Math.random() < 0.4; // 40% chance de invertido
+
+        let problemText = "";
+        if (!isInverted) {
+            // -5 < X < -3
+            problemText = `${valA} ${opTypeLeft} <span style="color:#2563eb">x</span> ${opTypeRight} ${valB}`;
+        } else {
+            // -3 > X > -5 (Cuidado: Invertimos los números de lugar y los símbolos)
+            let opLeftInv = (opTypeRight === '<') ? '>' : '≥';
+            let opRightInv = (opTypeLeft === '<') ? '>' : '≥';
+            problemText = `${valB} ${opLeftInv} <span style="color:#2563eb">x</span> ${opRightInv} ${valA}`;
+        }
+
+        document.getElementById('problemDisplay').innerHTML = problemText;
+        startTimer();
+    }
+
+    function checkAnswer() {
+        if (document.getElementById('userAnswer').disabled) return;
+
+        let rawInput = document.getElementById('userAnswer').value.trim();
+        let feedbackEl = document.getElementById('feedback');
+        
+        // Parar timer temporalmente para mostrar feedback
+        clearInterval(state.timerInterval);
+
+        if (!rawInput.includes(':')) {
+            feedbackEl.className = 'feedback-wrong';
+            feedbackEl.innerText = "Formato inválido. Usa dos puntos (ej: -5:-3)";
+            playSound('wrong');
+            return;
+        }
+
+        let parts = rawInput.split(':');
+        let userMin = parseInt(parts[0]);
+        let userMax = parseInt(parts[1]);
+
+        if (isNaN(userMin) || isNaN(userMax)) {
+            feedbackEl.className = 'feedback-wrong';
+            feedbackEl.innerText = "Ingresa solo números enteros.";
+            playSound('wrong');
+            return;
+        }
+
+        if (userMin === state.currentSolution.min && userMax === state.currentSolution.max) {
+            // Correcto
+            state.score++;
+            state.streak++;
+            playSound('correct');
+            feedbackEl.className = 'feedback-correct';
+            feedbackEl.innerHTML = "¡Correcto! 🎉";
+            updateScoreBoard();
+            setTimeout(generateProblem, 1000);
+        } else {
+            // Incorrecto
+            state.streak = 0;
+            playSound('wrong');
+            document.querySelector('.problem-box').classList.add('shake');
+            feedbackEl.className = 'feedback-wrong';
+            feedbackEl.innerHTML = `Incorrecto. Era <strong>${state.currentSolution.min}:${state.currentSolution.max}</strong>`;
+            updateScoreBoard();
+            document.getElementById('userAnswer').disabled = true;
+            setTimeout(generateProblem, 2000);
+        }
+    }
+
+    function updateScoreBoard() {
+        document.getElementById('score').innerText = state.score;
+        document.getElementById('streak').innerText = state.streak;
+    }
+
+    // Event Listeners
+    document.getElementById('userAnswer').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") checkAnswer();
+    });
+
+    // Iniciar
+    generateProblem();
+
+</script>
+
+</body>
+</html>
